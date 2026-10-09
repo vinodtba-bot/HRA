@@ -1,0 +1,43 @@
+{
+  "name": "hra-member-app",
+  "version": "1.0.0",
+  "description": "Headless HRA member app MVP: SMS link, identity check, one-question-per-screen HRA, care plan",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "seed": "tsx --env-file=.env scripts/seed.ts",
+    "import": "tsx --env-file=.env scripts/import.ts",
+    "worker": "tsx --env-file=.env scripts/worker.ts",
+    "job": "tsx --env-file=.env scripts/run-job.ts",
+    "recheck": "tsx --env-file=.env scripts/recheck.ts",
+    "e2e": "tsx --env-file=.env tests/e2e/flow.ts && tsx --env-file=.env tests/e2e/jobs-check.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "csv-parse": "^5.6.0",
+    "libphonenumber-js": "^1.13.15",
+    "next": "^15.5.27",
+    "pg-boss": "^10.4.2",
+    "pino": "^9.14.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "twilio": "^5.13.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "playwright": "^1.64.0",
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  },
+  "private": true
+}

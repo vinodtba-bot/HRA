@@ -5,4 +5,3 @@ node_modules
 exports/
 *.tsbuildinfo
 next-env.d.ts
-tests/e2e/*.png
