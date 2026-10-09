@@ -1,0 +1,8 @@
+node_modules
+.next
+.env
+.dev-outbox.log
+exports/
+*.tsbuildinfo
+next-env.d.ts
+tests/e2e/*.png
