@@ -7,6 +7,8 @@ Built from the *Headless HRA App: MVP Build Guide* (steps 1 to 12).
 One Next.js 15 app (member screens, short links, API, admin page), Postgres 16 with Prisma, pg-boss for jobs,
 Twilio for SMS. Without Twilio credentials, texts go to `.dev-outbox.log` so the whole flow runs locally.
 
+Deploying, connecting Twilio and getting a public URL: see [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Run it locally
 
 Needs Node 20+ and Postgres 16.

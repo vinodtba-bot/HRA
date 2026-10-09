@@ -15,7 +15,10 @@
     "worker": "tsx --env-file=.env scripts/worker.ts",
     "job": "tsx --env-file=.env scripts/run-job.ts",
     "recheck": "tsx --env-file=.env scripts/recheck.ts",
-    "e2e": "tsx --env-file=.env tests/e2e/flow.ts && tsx --env-file=.env tests/e2e/jobs-check.ts"
+    "e2e": "tsx --env-file=.env tests/e2e/flow.ts && tsx --env-file=.env tests/e2e/jobs-check.ts",
+    "worker:prod": "tsx scripts/worker.ts",
+    "import:prod": "tsx scripts/import.ts",
+    "seed:prod": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -28,3 +28,8 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
       - run: npx next build
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t hra-app .
