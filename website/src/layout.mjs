@@ -146,7 +146,7 @@ const fonts =
 // `fragment` drops the document wrapper (doctype, html, head, body) for hosts
 // that supply their own, such as the Claude artifact preview of the home page.
 export function renderPage({ path, title, description, body, fragment = false }) {
-  const fullTitle = path === 'index.html' ? `${brandName()}: ${site.tagline}` : `${title} | ${brandName()}`;
+  const fullTitle = path === 'index.html' ? brandName() : `${title} | ${brandName()}`;
   const head = `<title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(description)}">
 <meta property="og:title" content="${esc(fullTitle)}">
