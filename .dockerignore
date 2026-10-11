@@ -1,0 +1,9 @@
+node_modules
+.next
+.env
+.env.*
+!.env.example
+.dev-outbox.log
+exports
+tests/e2e/*.png
+.git

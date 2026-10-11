@@ -1,0 +1,213 @@
+// Headless HRA member app: 13 tables, per the MVP build guide data model.
+// The URL only ever carries a random code; the database only ever holds its peppered hash.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Member {
+  id                   String       @id @default(uuid())
+  planMemberId         String       @unique @map("plan_member_id")
+  firstName            String       @map("first_name")
+  phoneE164            String?      @map("phone_e164")
+  dobHmac              Bytes        @map("dob_hmac")
+  zipHmac              Bytes?       @map("zip_hmac")
+  medicaidIdHmac       Bytes?       @map("medicaid_id_hmac")
+  language             String       @default("en")
+  state                String
+  lineOfBusiness       String       @map("line_of_business")
+  riskTier             Int          @default(1) @map("risk_tier")
+  enrollmentDate       DateTime?    @map("enrollment_date") @db.Date
+  optedOutAt           DateTime?    @map("opted_out_at")
+  badNumberAt          DateTime?    @map("bad_number_at")
+  outreachPausedUntil  DateTime?    @map("outreach_paused_until")
+  createdAt            DateTime     @default(now()) @map("created_at")
+  invitations          Invitation[]
+
+  @@index([phoneE164])
+  @@map("member")
+}
+
+model Campaign {
+  id          String       @id @default(uuid())
+  name        String
+  linkTtlDays Int          @default(14) @map("link_ttl_days")
+  status      String       @default("active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  invitations Invitation[]
+
+  @@map("campaign")
+}
+
+model Invitation {
+  id                String       @id @default(uuid())
+  campaignId        String       @map("campaign_id")
+  memberId          String       @map("member_id")
+  phoneE164         String       @map("phone_e164")
+  // Current link's hash, plus the one before it so an older text still works after a reminder.
+  tokenHash         Bytes?       @unique @map("token_hash")
+  prevTokenHash     Bytes?       @unique @map("prev_token_hash")
+  expiresAt         DateTime     @map("expires_at")
+  revokedAt         DateTime?    @map("revoked_at")
+  firstOpenedAt     DateTime?    @map("first_opened_at")
+  verifiedAt        DateTime?    @map("verified_at")
+  failedAttempts    Int          @default(0) @map("failed_attempts")
+  lockedUntil       DateTime?    @map("locked_until")
+  relinksToday      Int          @default(0) @map("relinks_today")
+  relinkDay         String?      @map("relink_day")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  campaign          Campaign     @relation(fields: [campaignId], references: [id])
+  member            Member       @relation(fields: [memberId], references: [id])
+  messages          Message[]
+  sessions          Session[]
+  assessment        Assessment?
+  auditEvents       AuditEvent[]
+
+  @@unique([campaignId, memberId])
+  @@map("invitation")
+}
+
+model Message {
+  id                String     @id @default(uuid())
+  invitationId      String     @map("invitation_id")
+  twilioSid         String?    @unique @map("twilio_sid")
+  kind              String // invite, reminder, resume, relink, confirm
+  attemptNumber     Int        @default(1) @map("attempt_number")
+  status            String     @default("queued") // queued, sent, delivered, undelivered, failed
+  errorCode         Int?       @map("error_code")
+  disposition       String? // delivered_no_response, engaged, completed, declined, reported_complete, opted_out, bad_number
+  dispositionReason String?    @map("disposition_reason")
+  sentAt            DateTime?  @map("sent_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  invitation        Invitation @relation(fields: [invitationId], references: [id])
+
+  @@index([invitationId])
+  @@map("message")
+}
+
+model Session {
+  id           String     @id // sha256 of the random cookie value
+  invitationId String     @map("invitation_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  lastSeenAt   DateTime   @default(now()) @map("last_seen_at")
+  expiresAt    DateTime   @map("expires_at") // absolute 4 h cap
+  ip           String?
+  userAgent    String?    @map("user_agent")
+  invitation   Invitation @relation(fields: [invitationId], references: [id])
+
+  @@map("session")
+}
+
+model Assessment {
+  id                   String     @id @default(uuid())
+  invitationId         String     @unique @map("invitation_id")
+  questionnaireId      String     @map("questionnaire_id")
+  questionnaireVersion String     @map("questionnaire_version")
+  status               String     @default("in_progress") // in_progress, completed, partial, declined, reported_complete
+  outcomeReason        String?    @map("outcome_reason")
+  recheckAt            DateTime?  @map("recheck_at")
+  completionMethod     String?    @map("completion_method") // self_web, self_sms, ivr, staff_phone, face_to_face, mail, fax
+  missingRequired      String[]   @default([]) @map("missing_required")
+  currentLinkId        String?    @map("current_link_id")
+  crisisFlaggedAt      DateTime?  @map("crisis_flagged_at")
+  resumeNudgedAt       DateTime?  @map("resume_nudged_at")
+  startedAt            DateTime   @default(now()) @map("started_at")
+  lastActivityAt       DateTime   @default(now()) @map("last_activity_at")
+  completedAt          DateTime?  @map("completed_at")
+  invitation           Invitation @relation(fields: [invitationId], references: [id])
+  questionnaire        Questionnaire @relation(fields: [questionnaireId, questionnaireVersion], references: [id, version])
+  answers              Answer[]
+  carePlan             CarePlan?
+  referrals            Referral[]
+
+  @@map("assessment")
+}
+
+model Answer {
+  assessmentId String     @map("assessment_id")
+  linkId       String     @map("link_id")
+  value        Json
+  answeredAt   DateTime   @default(now()) @map("answered_at")
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+
+  @@id([assessmentId, linkId])
+  @@map("answer")
+}
+
+model CarePlan {
+  id           String     @id @default(uuid())
+  assessmentId String     @unique @map("assessment_id")
+  items        Json
+  createdAt    DateTime   @default(now()) @map("created_at")
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+
+  @@map("care_plan")
+}
+
+model AuditEvent {
+  id           BigInt      @id @default(autoincrement())
+  at           DateTime    @default(now())
+  actor        String      @default("member")
+  invitationId String?     @map("invitation_id")
+  event        String
+  ip           String?
+  userAgent    String?     @map("user_agent")
+  detail       Json?
+  invitation   Invitation? @relation(fields: [invitationId], references: [id])
+
+  @@index([invitationId])
+  @@map("audit_event")
+}
+
+model Questionnaire {
+  id          String       @db.VarChar(100)
+  version     String       @db.VarChar(40)
+  displayName String       @map("display_name")
+  definition  Json
+  status      String       @default("published") // draft, published
+  publishedAt DateTime?    @map("published_at")
+  assessments Assessment[]
+
+  @@id([id, version])
+  @@map("questionnaire")
+}
+
+model FormAssignment {
+  id              String    @id @default(uuid())
+  state           String? // null = any state
+  lineOfBusiness  String?   @map("line_of_business") // null = any line of business
+  questionnaireId String    @map("questionnaire_id")
+  priority        Int       @default(0)
+  effectiveFrom   DateTime  @default(now()) @map("effective_from")
+  effectiveTo     DateTime? @map("effective_to")
+
+  @@map("form_assignment")
+}
+
+model StatePolicy {
+  state               String   @id
+  verifyFields        String[] @map("verify_fields") // e.g. {medicaid_id,dob}
+  partialFollowupDays Int      @default(14) @map("partial_followup_days")
+  timezone            String   @default("America/New_York")
+
+  @@map("state_policy")
+}
+
+model Referral {
+  id           String     @id @default(uuid())
+  assessmentId String     @map("assessment_id")
+  program      String // maternity, care_management, sdoh_outreach, crisis
+  reason       String
+  priority     Int
+  createdAt    DateTime   @default(now()) @map("created_at")
+  sentAt       DateTime?  @map("sent_at")
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+
+  @@unique([assessmentId, program])
+  @@map("referral")
+}

@@ -1,0 +1,182 @@
+{
+  "id": "snp-hra",
+  "version": "1.0.0",
+  "displayName": "Health Risk Assessment",
+  "items": [
+    {
+      "linkId": "general_health",
+      "text": "In general, how would you rate your health?",
+      "section": "Your health",
+      "type": "choice",
+      "options": [
+        {
+          "value": "excellent",
+          "label": "Excellent"
+        },
+        {
+          "value": "very_good",
+          "label": "Very good"
+        },
+        {
+          "value": "good",
+          "label": "Good"
+        },
+        {
+          "value": "fair",
+          "label": "Fair"
+        },
+        {
+          "value": "poor",
+          "label": "Poor"
+        }
+      ],
+      "required": true
+    },
+    {
+      "linkId": "chronic_condition",
+      "text": "Has a doctor ever told you that you have a long-term condition, like diabetes, asthma, COPD, heart disease or high blood pressure?",
+      "section": "Your health",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "linkId": "er_visits",
+      "text": "How many times did you go to the emergency room in the last 12 months?",
+      "section": "Your health",
+      "type": "integer",
+      "min": 0,
+      "max": 99,
+      "required": true
+    },
+    {
+      "linkId": "has_pcp",
+      "text": "Do you have a regular doctor or clinic you go to?",
+      "section": "Your health",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "linkId": "fell",
+      "text": "Have you fallen in the last 12 months?",
+      "section": "Safety",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "linkId": "fall_injured",
+      "text": "Were you hurt when you fell?",
+      "section": "Safety",
+      "type": "boolean",
+      "enableWhen": [
+        {
+          "question": "fell",
+          "operator": "=",
+          "answer": true
+        }
+      ]
+    },
+    {
+      "linkId": "food_worry",
+      "text": "In the last 12 months, how often did you worry that food would run out before you had money to buy more?",
+      "section": "Daily life",
+      "type": "choice",
+      "options": [
+        {
+          "value": "never",
+          "label": "Never"
+        },
+        {
+          "value": "sometimes",
+          "label": "Sometimes"
+        },
+        {
+          "value": "often",
+          "label": "Often"
+        }
+      ],
+      "required": true
+    },
+    {
+      "linkId": "housing_unstable",
+      "text": "Are you worried about losing your housing, or do you not have a steady place to live?",
+      "section": "Daily life",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "linkId": "transport_barrier",
+      "text": "In the last 12 months, has a lack of transportation kept you from medical appointments?",
+      "section": "Daily life",
+      "type": "boolean"
+    },
+    {
+      "linkId": "adl_help",
+      "text": "Do you need help with daily tasks like bathing, dressing or getting around your home?",
+      "section": "Daily life",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "linkId": "lives_alone",
+      "text": "Do you live alone?",
+      "section": "Daily life",
+      "type": "boolean"
+    },
+    {
+      "linkId": "phq2_interest",
+      "text": "Over the last 2 weeks, how often have you had little interest or pleasure in doing things?",
+      "section": "How you feel",
+      "type": "choice",
+      "options": [
+        {
+          "value": "0",
+          "label": "Not at all"
+        },
+        {
+          "value": "1",
+          "label": "Several days"
+        },
+        {
+          "value": "2",
+          "label": "More than half the days"
+        },
+        {
+          "value": "3",
+          "label": "Nearly every day"
+        }
+      ],
+      "required": true
+    },
+    {
+      "linkId": "phq2_down",
+      "text": "Over the last 2 weeks, how often have you felt down, depressed or hopeless?",
+      "section": "How you feel",
+      "type": "choice",
+      "options": [
+        {
+          "value": "0",
+          "label": "Not at all"
+        },
+        {
+          "value": "1",
+          "label": "Several days"
+        },
+        {
+          "value": "2",
+          "label": "More than half the days"
+        },
+        {
+          "value": "3",
+          "label": "Nearly every day"
+        }
+      ],
+      "required": true
+    },
+    {
+      "linkId": "smoker",
+      "text": "Do you smoke or use tobacco?",
+      "section": "Habits",
+      "type": "boolean"
+    }
+  ]
+}

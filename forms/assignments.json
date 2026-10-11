@@ -1,0 +1,26 @@
+[
+  {
+    "state": "TX",
+    "lineOfBusiness": "Medicaid",
+    "questionnaireId": "tx-medicaid-hra",
+    "priority": 20
+  },
+  {
+    "state": "FL",
+    "lineOfBusiness": "Medicaid",
+    "questionnaireId": "fl-medicaid-hra",
+    "priority": 20
+  },
+  {
+    "state": null,
+    "lineOfBusiness": "D-SNP",
+    "questionnaireId": "snp-hra",
+    "priority": 10
+  },
+  {
+    "state": null,
+    "lineOfBusiness": null,
+    "questionnaireId": "general-hra",
+    "priority": 0
+  }
+]
