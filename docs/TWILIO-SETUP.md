@@ -127,6 +127,10 @@ creates a fresh link. A number that replied STOP is skipped until it replies STA
 
 Twilio's own log of every message and error code: Console > **Monitor** > **Logs** > **Messaging**.
 
+**Test link without a text.** Until 10DLC is approved, carriers block the text itself. To get a working link anyway,
+run `npm run test-link -- ME0001` (the member's `plan_member_id`). It prints a fresh link at `PUBLIC_LINK_BASE`;
+open it on your phone. Any link already texted to that member stops working. It refuses to run in production.
+
 ## Before real members
 
 A trial account and a temporary tunnel are for testing only. Before texting members you need an upgraded account,
