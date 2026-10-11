@@ -1,4 +1,5 @@
 import { esc, solutionHref, statusPill } from './layout.mjs';
+import { site } from './config.mjs';
 import { solutions } from './solutions.mjs';
 
 // Phone screens redrawn from the member app MVP (sample plan: "Sunrise Health Plan").
@@ -87,3 +88,24 @@ export const comparisonTable = () => `<div class="table-scroll"><table class="co
   </tbody>
 </table></div>
 <p class="muted" style="font-size:.85rem;margin-top:.75rem">Comparison of common approaches, not of named vendors. Many vendors combine several of them.</p>`;
+
+// A form that emails its contents to the company inbox through site.formEndpoint.
+// `subject` becomes the email subject line.
+export const mailForm = ({ id, subject, fields, button, doneTitle, doneText }) => `<form class="form" id="${id}" data-endpoint="${esc(
+  site.formEndpoint,
+)}" data-done="${id}-done" novalidate>
+  <input type="hidden" name="_subject" value="${esc(subject)}">
+  <input type="hidden" name="_template" value="table">
+  <input type="hidden" name="_captcha" value="false">
+  <input class="form__trap" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+  ${fields}
+  <p class="form__error" role="alert" hidden>That didn’t send. Please try again, or email us at <a href="mailto:${esc(
+    site.contactEmail,
+  )}">${esc(site.contactEmail)}</a>.</p>
+  <button class="btn btn--primary" type="submit" data-label="${esc(button)}">${esc(button)}</button>
+  <p class="muted" style="font-size:.8rem">Please don’t include member or patient health information. See our <a href="privacy.html">privacy policy</a>.</p>
+</form>
+<div class="form__done" id="${id}-done" tabindex="-1" hidden>
+  <h3>${esc(doneTitle)}</h3>
+  <p>${esc(doneText)}</p>
+</div>`;

@@ -1,4 +1,4 @@
-import { questionPhone } from '../components.mjs';
+import { questionPhone, mailForm } from '../components.mjs';
 
 export const path = 'demo.html';
 export const title = 'Request a demo';
@@ -21,8 +21,10 @@ export const body = `
     </div>
 
     <div class="card">
-      <form class="form" id="demo-form" novalidate>
-        <div class="form__row">
+      ${mailForm({
+        id: 'demo-form',
+        subject: 'Demo request: AyuHealth',
+        fields: `<div class="form__row">
           <div class="field"><label for="f-name">Full name</label><input id="f-name" name="name" required autocomplete="name"></div>
           <div class="field"><label for="f-email">Work email</label><input id="f-email" name="email" type="email" required autocomplete="email"></div>
         </div>
@@ -37,14 +39,11 @@ export const body = `
           <div class="field"><label for="f-states">States</label><input id="f-states" name="states" placeholder="For example TX, FL"></div>
         </div>
         <div class="field"><label for="f-members">Members due for an HRA each year (approximate)</label><input id="f-members" name="members" inputmode="numeric"></div>
-        <div class="field"><label for="f-note">What would you like to see?</label><textarea id="f-note" name="note" rows="4"></textarea></div>
-        <button class="btn btn--primary" type="submit">Request a demo</button>
-        <p class="muted" style="font-size:.8rem">Please don’t include member information in this form.</p>
-      </form>
-      <div class="form__done" id="demo-done" hidden>
-        <h3>Thanks. Your request is in.</h3>
-        <p>We’ll email you to find a time. Preview note: this form isn’t connected to an inbox yet, so nothing was sent.</p>
-      </div>
+        <div class="field"><label for="f-note">What would you like to see?</label><textarea id="f-note" name="note" rows="4"></textarea></div>`,
+        button: 'Request a demo',
+        doneTitle: 'Thanks. Your request is in.',
+        doneText: 'We’ll email you to find a time.',
+      })}
     </div>
   </div>
 </section>

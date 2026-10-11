@@ -4,7 +4,7 @@ import { solutions, segments } from './solutions.mjs';
 export const esc = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export const brandName = () => `${site.brand} ${site.brandSuffix}`.trim();
+export const brandName = () => `${site.brand}${site.brandSuffix}`;
 
 export const solutionHref = (s) => `solutions-${s.slug}.html`;
 
@@ -72,7 +72,7 @@ function header(current) {
   <div class="wrap site-header__row">
     <a class="logo" href="index.html" aria-label="${esc(brandName())} home">${logoMark()}<span>${esc(
       site.brand,
-    )}<span class="logo__suffix"> ${esc(site.brandSuffix)}</span></span></a>
+    )}<span class="logo__suffix">${esc(site.brandSuffix)}</span></span></a>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
       <span class="nav-toggle__bars" aria-hidden="true"></span><span class="nav-toggle__text">Menu</span>
     </button>
@@ -102,9 +102,7 @@ function footer() {
   return `<footer class="site-footer">
   <div class="wrap footer__grid">
     <div class="footer__brand">
-      <a class="logo" href="index.html">${logoMark()}<span>${esc(site.brand)}<span class="logo__suffix"> ${esc(
-        site.brandSuffix,
-      )}</span></span></a>
+      <a class="logo" href="index.html">${logoMark()}<span>${esc(site.brand)}<span class="logo__suffix">${esc(site.brandSuffix)}</span></span></a>
       <p>${esc(site.tagline)} Secure text-to-web outreach for health plans, starting with health risk assessments.</p>
     </div>
     ${col('Platform', [
@@ -130,11 +128,13 @@ function footer() {
       ['About us', 'company.html'],
       ['Trust and security', 'security.html'],
       ['Careers', 'company.html#careers'],
+      ['Contact', 'contact.html'],
       ['Request a demo', 'demo.html'],
     ])}
   </div>
   <div class="wrap footer__base">
     <p>© ${site.year} ${esc(brandName())}. All rights reserved.</p>
+    <p class="footer__links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="mailto:${esc(site.contactEmail)}">${esc(site.contactEmail)}</a></p>
     <p class="footer__note">Plan names and member details shown in product screens are fictional samples.</p>
   </div>
 </footer>`;
@@ -149,6 +149,10 @@ export function renderPage({ path, title, description, body, fragment = false })
   const fullTitle = path === 'index.html' ? brandName() : `${title} | ${brandName()}`;
   const head = `<title>${esc(fullTitle)}</title>
 <meta name="description" content="${esc(description)}">
+<link rel="canonical" href="https://${site.domain}/${path === 'index.html' ? '' : path}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://${site.domain}/${path === 'index.html' ? '' : path}">
+<meta property="og:site_name" content="${esc(brandName())}">
 <meta property="og:title" content="${esc(fullTitle)}">
 <meta property="og:description" content="${esc(description)}">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">

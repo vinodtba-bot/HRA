@@ -54,12 +54,11 @@ export const body = `
     <div class="stack">
       <p class="eyebrow">Contact</p>
       <h2>Talk to ${brandName()}.</h2>
-      <p class="lede">For demos and pilots, use the request form. For anything else, email us.</p>
+      <p class="lede">For demos and pilots, use the request form. For anything else, send us a message.</p>
     </div>
     <div class="stack">
       <p class="mono" style="font-size:1.05rem">${site.contactEmail}</p>
-      <p class="muted" style="font-size:.85rem">Placeholder address until a company inbox is set up.</p>
-      <div class="btn-row"><a class="btn btn--primary" href="demo.html">Request a demo</a></div>
+      <div class="btn-row"><a class="btn btn--primary" href="contact.html">Contact us</a><a class="btn btn--ghost" href="demo.html">Request a demo</a></div>
     </div>
   </div>
 </section>

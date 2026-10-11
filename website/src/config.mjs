@@ -1,11 +1,15 @@
 // Site-wide settings. Change the brand here and every page picks it up.
-// "Wayfold" is a working name only, until the product name is decided.
 export const site = {
-  brand: 'Wayfold',
+  brand: 'Ayu',
   brandSuffix: 'Health',
   tagline: 'Member outreach that members finish.',
-  // Shown in the footer and on the demo page. Placeholder until a real inbox exists.
-  contactEmail: 'hello@example.com',
+  // Shown on the contact page and in the footer; the forms deliver here too.
+  contactEmail: 'info@ayuhealth.io',
+  domain: 'ayuhealth.io',
+  // Where the contact and demo forms post. FormSubmit forwards each submission to
+  // contactEmail; the first one sends an activation email to that inbox that must be confirmed.
+  // Swap for any endpoint that accepts JSON (HubSpot, Formspree, your own API).
+  formEndpoint: 'https://formsubmit.co/ajax/info@ayuhealth.io',
   year: 2026,
 };
 
@@ -43,7 +47,7 @@ export const nav = [
       { label: 'About us', href: 'company.html', note: 'Why we build member outreach' },
       { label: 'Trust and security', href: 'security.html', note: 'How member data is protected' },
       { label: 'Careers', href: 'company.html#careers', note: 'Join the team' },
-      { label: 'Contact', href: 'demo.html', note: 'Talk to us about your program' },
+      { label: 'Contact', href: 'contact.html', note: 'Email or message our team' },
     ],
   },
 ];
