@@ -6,6 +6,3 @@ exports/
 *.tsbuildinfo
 next-env.d.ts
 tests/e2e/*.png
-
-# marketing site build output
-website/dist/
