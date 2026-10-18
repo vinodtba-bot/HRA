@@ -1,0 +1,29 @@
+[
+  {
+    "state": "TX",
+    "verifyFields": [
+      "medicaid_id",
+      "dob"
+    ],
+    "partialFollowupDays": 14,
+    "timezone": "America/Chicago"
+  },
+  {
+    "state": "FL",
+    "verifyFields": [
+      "medicaid_id",
+      "dob"
+    ],
+    "partialFollowupDays": 14,
+    "timezone": "America/New_York"
+  },
+  {
+    "state": "AZ",
+    "verifyFields": [
+      "dob",
+      "zip"
+    ],
+    "partialFollowupDays": 21,
+    "timezone": "America/Phoenix"
+  }
+]
