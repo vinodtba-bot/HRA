@@ -43,4 +43,4 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx tsc -p .
       - run: npx cdk synth -q
-        env: { CDK_DEFAULT_REGION: us-east-1 }
+        env: { CDK_DEFAULT_REGION: us-east-2 }

@@ -70,7 +70,7 @@ go.planname.com ──HTTPS──> ALB ──> ECS service "web"    (npm start, 
 ```
 
 **The quick way:** [`infra/README.md`](../infra/README.md) sets all of this up with one command (AWS CDK). The steps
-below are the same layout done by hand in the AWS console and CLI, in `us-east-1`. Replace `<acct>` with your AWS account ID.
+below are the same layout done by hand in the AWS console and CLI, in `us-east-2`. Replace `<acct>` with your AWS account ID.
 
 1. **BAA.** AWS Artifact > Agreements > accept the AWS Business Associate Addendum for the account.
 2. **Network.** Use a VPC with two public subnets (for the load balancer) and two private subnets with a NAT gateway
@@ -89,9 +89,9 @@ below are the same layout done by hand in the AWS console and CLI, in `us-east-1
    Plain (non-secret) values go in the task definition instead: `PUBLIC_LINK_BASE`, `PLAN_NAME`, `PLAN_NURSE_LINE`.
 5. **Image.** Create the ECR repository `hra-app`, then from the repo root:
    ```bash
-   aws ecr get-login-password | docker login --username AWS --password-stdin <acct>.dkr.ecr.us-east-1.amazonaws.com
-   docker build -t <acct>.dkr.ecr.us-east-1.amazonaws.com/hra-app:v1 .
-   docker push <acct>.dkr.ecr.us-east-1.amazonaws.com/hra-app:v1
+   aws ecr get-login-password | docker login --username AWS --password-stdin <acct>.dkr.ecr.us-east-2.amazonaws.com
+   docker build -t <acct>.dkr.ecr.us-east-2.amazonaws.com/hra-app:v1 .
+   docker push <acct>.dkr.ecr.us-east-2.amazonaws.com/hra-app:v1
    ```
 6. **Task definitions** (ECS > Task definitions > Create, Fargate, Linux/X86_64, 0.5 vCPU / 1 GB):
    - `hra-web`: image `…/hra-app:v1`, port 3000, environment from the `hra/app` secret (one entry per key, "ValueFrom"

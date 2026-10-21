@@ -20,7 +20,7 @@ Rough cost for a pilot: $120–150 a month (an estimate, mostly the database, lo
    brew install --cask session-manager-plugin
    aws configure
    ```
-   For `aws configure`, paste the key ID and secret, region `us-east-1`, output `json`.
+   For `aws configure`, paste the key ID and secret, region `us-east-2`, output `json`. (Your AWS organization blocks `us-east-1`; `us-east-2`, Ohio, is allowed.)
 4. **Docker Desktop** must be open and running. The deploy builds the app's image on your Mac.
 
 ## Deploy
@@ -48,7 +48,7 @@ Settings are in `infra/cdk.json`. Change them there (or pass `-c name=value`) an
 
 The first deploy takes about 20–30 minutes. **It pauses at the certificate** until you prove you own the domain:
 
-1. In the AWS console, open **Certificate Manager** (region N. Virginia). Open the certificate for your domain, which
+1. In the AWS console, open **Certificate Manager** (region **US East (Ohio)**, top right). Open the certificate for your domain, which
    says "Pending validation". Under **Domains** it shows a **CNAME name** and **CNAME value**.
 2. Add that record where the domain's DNS is managed. In Cloudflare: **DNS** > **Add record**, type CNAME, paste the
    name (without the trailing `.ayuhealth.io.` part if Cloudflare adds it itself) and value, proxy status
