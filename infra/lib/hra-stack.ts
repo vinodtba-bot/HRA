@@ -45,13 +45,14 @@ export class HraStack extends cdk.Stack {
     });
     const appSubnets = { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS };
 
-    // No punctuation in the generated password, so it can go into DATABASE_URL without escaping.
+    // Only letters, digits and - _ . in the generated password, so it can go into DATABASE_URL without escaping.
+    // (Secrets Manager refuses to exclude every punctuation character.)
     const db = new rds.DatabaseInstance(this, 'Db', {
       engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_16 }),
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.SMALL),
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
-      credentials: rds.Credentials.fromGeneratedSecret('hra', { excludeCharacters: " %+~`#$&*()|[]{}:;<>?!'/@\"\\,.=^-_" }),
+      credentials: rds.Credentials.fromGeneratedSecret('hra', { excludeCharacters: " %+~`#$&*()|[]{}:;<>?!'/@\"\\,=^" }),
       databaseName: 'hra',
       allocatedStorage: 20,
       maxAllocatedStorage: 100,
@@ -71,7 +72,6 @@ export class HraStack extends cdk.Stack {
     // Filled in after the first deploy by infra/set-twilio.sh. Until then sends fail loudly ("Twilio is not configured").
     const twilioKeys = ['TWILIO_ACCOUNT_SID', 'TWILIO_API_KEY', 'TWILIO_API_SECRET', 'TWILIO_AUTH_TOKEN', 'TWILIO_MESSAGING_SERVICE_SID'];
     const twilioSecret = new sm.Secret(this, 'Twilio', {
-      secretName: 'hra/twilio',
       secretObjectValue: Object.fromEntries(twilioKeys.map(k => [k, cdk.SecretValue.unsafePlainText('')])),
     });
 
@@ -219,6 +219,7 @@ export class HraStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'WebService', { value: web.service.serviceName });
     new cdk.CfnOutput(this, 'WorkerService', { value: worker.serviceName });
     new cdk.CfnOutput(this, 'DataBucket', { value: dataBucket.bucketName });
+    new cdk.CfnOutput(this, 'TwilioSecret', { value: twilioSecret.secretName });
     new cdk.CfnOutput(this, 'AdminUserPool', { value: adminPool.userPoolId });
   }
 }
