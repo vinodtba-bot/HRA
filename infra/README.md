@@ -31,9 +31,11 @@ From the HRA folder:
 git pull
 cd infra
 npm install
-npx cdk bootstrap        # first time only
+npx cdk bootstrap
 npx cdk deploy
 ```
+
+`npx cdk bootstrap` is needed only the first time.
 
 Settings are in `infra/cdk.json`. Change them there (or pass `-c name=value`) and deploy again:
 
