@@ -13,9 +13,8 @@ for k in "${keys[@]}"; do
   args+=("$k" "$v")
 done
 json=$(node -e 'const a=process.argv.slice(1),o={};for(let i=0;i<a.length;i+=2)o[a[i]]=a[i+1];console.log(JSON.stringify(o))' "${args[@]}")
-aws secretsmanager put-secret-value --secret-id hra/twilio --secret-string "$json" >/dev/null
-
 out() { aws cloudformation describe-stacks --stack-name Hra --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+aws secretsmanager put-secret-value --secret-id "$(out TwilioSecret)" --secret-string "$json" >/dev/null
 cluster=$(out ClusterName)
 for service in "$(out WebService)" "$(out WorkerService)"; do
   aws ecs update-service --cluster "$cluster" --service "$service" --force-new-deployment >/dev/null
