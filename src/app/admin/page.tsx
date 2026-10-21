@@ -35,12 +35,29 @@ export default async function AdminPage() {
     from assessment group by 1 order by 1`;
   const referrals = await prisma.referral.groupBy({ by: ['program'], _count: true });
   const overdue = await slaOverdue();
+  // Members whose answers triggered the crisis protocol in the last 30 days. Shown by plan member ID only.
+  const crisis = await prisma.assessment.findMany({
+    where: { crisisFlaggedAt: { gte: new Date(Date.now() - 30 * 86400_000) } },
+    select: { id: true, crisisFlaggedAt: true, invitation: { select: { member: { select: { planMemberId: true } } } } },
+    orderBy: { crisisFlaggedAt: 'desc' },
+  });
   const cols = funnel[0] ? Object.keys(funnel[0]).filter(k => k !== 'campaign') : [];
 
   return (
     <main style={{ maxWidth: 1100 }}>
       <h1>HRA outreach funnel</h1>
-      <p className="muted">{campaigns.length} campaign(s). Counts only, no member details. Exports below contain PHI.</p>
+      <p className="muted">{campaigns.length} campaign(s). Counts only, except crisis flags (plan member ID). Exports below contain PHI.</p>
+      <h2 id="crisis">Crisis flags (last 30 days)</h2>
+      <div className="card">
+        {crisis.length === 0 ? <p className="muted">None.</p> : (
+          <table>
+            <thead><tr><th>Plan member ID</th><th>Flagged at</th><th>Reference</th></tr></thead>
+            <tbody>{crisis.map(c => (
+              <tr key={c.id}><td>{c.invitation.member.planMemberId}</td><td>{c.crisisFlaggedAt?.toISOString()}</td><td>{c.id}</td></tr>
+            ))}</tbody>
+          </table>
+        )}
+      </div>
       <div className="card" style={{ overflowX: 'auto' }}>
         <table>
           <thead><tr><th>Campaign</th>{cols.map(c => <th key={c}>{c.replace(/_/g, ' ')}</th>)}</tr></thead>

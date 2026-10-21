@@ -4,6 +4,8 @@
     "domain": "hraapp.ayuhealth.io",
     "planName": "Your health plan",
     "nurseLine": "",
+    "alertEmail": "info@ayuhealth.io",
+    "loginDomainPrefix": "ayuhealth-hra-admin",
     "@aws-cdk/aws-ecs:enableImdsBlockingDeprecatedFeature": false
   }
 }

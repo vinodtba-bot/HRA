@@ -10,4 +10,6 @@ new HraStack(app, 'Hra', {
   domain,
   planName: app.node.tryGetContext('planName') ?? 'Your health plan',
   nurseLine: app.node.tryGetContext('nurseLine') ?? '',
+  alertEmail: app.node.tryGetContext('alertEmail') ?? '',
+  loginDomainPrefix: app.node.tryGetContext('loginDomainPrefix') ?? 'ayuhealth-hra-admin',
 });
