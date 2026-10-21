@@ -1,28 +1,25 @@
 import { notFound } from 'next/navigation';
 import { currentInvitation } from '@/lib/invitation';
 import { decline } from '../outcomes';
+import { t } from '@/lib/lang';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DeclinePage() {
   if (!(await currentInvitation())) notFound();
+  const { s } = await t();
   return (
     <main>
-      <h1>No problem</h1>
-      <p>We won&apos;t text you about this check-in again. If you like, tell us why. This is optional.</p>
+      <h1>{s.decline.h1}</h1>
+      <p>{s.decline.body}</p>
       <form action={decline} className="card">
-        <label htmlFor="reason">Reason (optional)</label>
+        <label htmlFor="reason">{s.decline.reasonLabel}</label>
         <select id="reason" name="reason" defaultValue="">
-          <option value="">Prefer not to say</option>
-          <option value="not_interested">Not interested</option>
-          <option value="no_time">No time right now</option>
-          <option value="privacy">Privacy concerns</option>
-          <option value="prefer_phone">I&apos;d rather talk to someone</option>
-          <option value="other">Something else</option>
+          {Object.entries(s.decline.reasons).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
         </select>
-        <button type="submit">Stop my check-in</button>
+        <button type="submit">{s.decline.button}</button>
       </form>
-      <div className="links"><a href="/start">Go back</a></div>
+      <div className="links"><a href="/start">{s.decline.back}</a></div>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { invitationFromLinkCookie, isExpired } from '@/lib/invitation';
 import { verifyFieldsFor, FIELD_LABELS } from '@/lib/identity';
+import { t } from '@/lib/lang';
 import VerifyForm from './VerifyForm';
 
 export const dynamic = 'force-dynamic';
@@ -11,17 +12,18 @@ export default async function StartPage() {
   if (!inv) notFound();
   if (isExpired(inv)) redirect('/expired');
   const fields = await verifyFieldsFor(inv.member.state);
+  const { s } = await t();
   return (
     <main>
-      <h1>Your health check-in</h1>
-      <p>A few questions about your health and daily life, so your plan can offer the right help. It takes about 10 minutes and saves as you go.</p>
+      <h1>{s.start.h1}</h1>
+      <p>{s.start.intro}</p>
       <div className="card">
-        <p className="muted">First, please confirm it is you.</p>
-        <VerifyForm fields={fields.map(f => ({ name: f, ...FIELD_LABELS[f] }))} />
+        <p className="muted">{s.start.confirm}</p>
+        <VerifyForm fields={fields.map(f => ({ name: f, ...FIELD_LABELS[f], ...s.fields[f] }))} submit={s.start.submit} checking={s.start.checking} />
       </div>
       <div className="links">
-        <a href="/already-done">I already did this check-in</a>
-        <a href="/decline">No thanks, I don&apos;t want to do this</a>
+        <a href="/already-done">{s.start.alreadyDone}</a>
+        <a href="/decline">{s.start.noThanks}</a>
       </div>
     </main>
   );

@@ -1,26 +1,24 @@
 import { requireSession } from '@/lib/session';
 import { requestCallback } from './actions';
+import { t } from '@/lib/lang';
 
 export const dynamic = 'force-dynamic';
-
-const TOPICS: Record<string, string> = {
-  falls: 'fall prevention', food: 'help with food', housing: 'help with housing', rides: 'rides to appointments',
-  mood: 'talking with a care manager', pcp: 'choosing a doctor', tobacco: 'quitting tobacco', daily_help: 'help at home',
-};
 
 export default async function CallbackPage({ searchParams }: { searchParams: Promise<{ topic?: string }> }) {
   await requireSession();
   const { topic = '' } = await searchParams;
-  const label = TOPICS[topic] ?? 'your care plan';
+  const { s } = await t();
+  const TOPICS = s.callback.topics;
+  const label = TOPICS[topic] ?? s.callback.fallback;
   return (
     <main>
-      <h1>Get a call about {label}</h1>
-      <p>Someone from your plan will call the phone number we have on file, usually within 2 business days.</p>
+      <h1>{s.callback.h1(label)}</h1>
+      <p>{s.callback.body}</p>
       <form action={requestCallback}>
         <input type="hidden" name="topic" value={TOPICS[topic] ? topic : 'other'} />
-        <button type="submit">Yes, please call me</button>
+        <button type="submit">{s.callback.button}</button>
       </form>
-      <div className="links"><a href="/done">Back to my plan</a></div>
+      <div className="links"><a href="/done">{s.callback.back}</a></div>
     </main>
   );
 }

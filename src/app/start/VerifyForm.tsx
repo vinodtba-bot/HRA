@@ -4,7 +4,7 @@ import { verify, type VerifyState } from './actions';
 
 type Field = { name: string; label: string; type: string; hint: string; autoComplete?: string; inputMode?: 'numeric' | 'text' };
 
-export default function VerifyForm({ fields }: { fields: Field[] }) {
+export default function VerifyForm({ fields, submit, checking }: { fields: Field[]; submit: string; checking: string }) {
   const [state, action, pending] = useActionState<VerifyState, FormData>(verify, {});
   return (
     <form action={action} noValidate>
@@ -17,7 +17,7 @@ export default function VerifyForm({ fields }: { fields: Field[] }) {
         </div>
       ))}
       {state.error && <p className="error" role="alert" style={{ marginTop: 14 }}>{state.error}</p>}
-      <button type="submit" disabled={pending}>{pending ? 'Checking…' : 'Start my check-in'}</button>
+      <button type="submit" disabled={pending}>{pending ? checking : submit}</button>
     </form>
   );
 }

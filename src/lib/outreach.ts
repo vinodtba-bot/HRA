@@ -2,7 +2,9 @@ import { prisma } from './db';
 import { hashCode, newCode } from './crypto';
 import { audit } from './audit';
 import { sendSms } from './sms';
-import { sms } from './messages';
+import { smsFor } from './messages';
+import { localizeForm, toLang } from './i18n';
+import type { FormDefinition } from './questionnaire';
 import { linkBase, MAX_OUTREACH_ATTEMPTS, OUTREACH_PAUSE_DAYS, RESUME_NUDGE_DAYS } from './config';
 import { addBusinessDays, ATTEMPT_HOURS, atLocalHour, businessDaysBetween, nextAllowedSendTime } from './schedule';
 import { enqueueSend, type SendLinkJob } from './jobs';
@@ -51,11 +53,14 @@ export async function sendLink({ invitationId, kind }: SendLinkJob): Promise<'se
   const msg = await prisma.message.create({ data: { invitationId, kind, attemptNumber } });
 
   const link = `${linkBase()}/r/${code}`;
-  const formName = inv.assessment
-    ? (await prisma.questionnaire.findUnique({
+  const lang = toLang(m.language);
+  const sms = smsFor(lang);
+  const q = inv.assessment
+    ? await prisma.questionnaire.findUnique({
         where: { id_version: { id: inv.assessment.questionnaireId, version: inv.assessment.questionnaireVersion } },
-      }))?.displayName ?? 'check-in'
-    : 'check-in';
+      })
+    : null;
+  const formName = q ? localizeForm(q.definition as unknown as FormDefinition, lang).displayName : lang === 'es' ? 'chequeo' : 'check-in';
   const body =
     kind === 'invite' ? sms.invite(link)
     : kind === 'reminder' ? sms.reminder(link)
