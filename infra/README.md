@@ -34,7 +34,7 @@ npx cdk bootstrap        # first time only
 npx cdk deploy
 ```
 
-The domain is set in `infra/cdk.json` (`app.ayuhealth.io`). To use another, run `npx cdk deploy -c domain=...`.
+The domain is set in `infra/cdk.json` (`hraapp.ayuhealth.io`). To use another, run `npx cdk deploy -c domain=...`.
 The plan's name and nurse line shown to members are also in `cdk.json` (`planName`, `nurseLine`).
 
 The first deploy takes about 20–30 minutes. **It pauses at the certificate** until you prove you own the domain:
@@ -47,16 +47,16 @@ The first deploy takes about 20–30 minutes. **It pauses at the certificate** u
 3. Within a few minutes the certificate turns "Issued" and the deploy carries on.
 
 When it finishes, it prints outputs. Copy `Hra.DnsTarget` (it ends in `elb.amazonaws.com`) and add one more DNS
-record: CNAME, name `app`, value the DnsTarget, **DNS only**.
+record: CNAME, name `hraapp`, value the DnsTarget, **DNS only**.
 
 ## After the first deploy
 
 1. **Twilio values.** From the HRA folder, run `infra/set-twilio.sh`. It copies the Twilio values from your `.env`
    into AWS and restarts the app.
 2. **Twilio webhook.** In Twilio > Messaging > Services > HRA app > Integration, set the Request URL to
-   `https://app.ayuhealth.io/api/twilio/inbound` (HTTP POST). This replaces the tunnel address for good.
-3. **Check it.** Open `https://app.ayuhealth.io/api/health`. It should show `{"ok":true}`.
-4. **Admin page.** `https://app.ayuhealth.io/admin`, user `admin`. Get the password with:
+   `https://hraapp.ayuhealth.io/api/twilio/inbound` (HTTP POST). This replaces the tunnel address for good.
+3. **Check it.** Open `https://hraapp.ayuhealth.io/api/health`. It should show `{"ok":true}`.
+4. **Admin page.** `https://hraapp.ayuhealth.io/admin`, user `admin`. Get the password with:
    ```
    aws secretsmanager get-secret-value --secret-id "$(aws cloudformation describe-stacks --stack-name Hra --query "Stacks[0].Outputs[?OutputKey=='AdminPasswordSecret'].OutputValue" --output text)" --query SecretString --output text
    ```
