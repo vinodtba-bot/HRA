@@ -7,3 +7,4 @@ node_modules
 exports
 tests/e2e/*.png
 .git
+infra
