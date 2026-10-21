@@ -69,7 +69,8 @@ go.planname.com ──HTTPS──> ALB ──> ECS service "web"    (npm start, 
                                    secrets from AWS Secrets Manager
 ```
 
-The steps below use the AWS console and CLI, in `us-east-1`. Replace `<acct>` with your AWS account ID.
+**The quick way:** [`infra/README.md`](../infra/README.md) sets all of this up with one command (AWS CDK). The steps
+below are the same layout done by hand in the AWS console and CLI, in `us-east-1`. Replace `<acct>` with your AWS account ID.
 
 1. **BAA.** AWS Artifact > Agreements > accept the AWS Business Associate Addendum for the account.
 2. **Network.** Use a VPC with two public subnets (for the load balancer) and two private subnets with a NAT gateway

@@ -33,3 +33,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t hra-app .
+  infra:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: infra } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci --no-audit --no-fund
+      - run: npx tsc -p .
+      - run: npx cdk synth -q
+        env: { CDK_DEFAULT_REGION: us-east-1 }

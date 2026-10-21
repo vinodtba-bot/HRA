@@ -7,7 +7,7 @@ Built from the *Headless HRA App: MVP Build Guide* (steps 1 to 12).
 One Next.js 15 app (member screens, short links, API, admin page), Postgres 16 with Prisma, pg-boss for jobs,
 Twilio for SMS. Without Twilio credentials, texts go to `.dev-outbox.log` so the whole flow runs locally.
 
-Deploying and getting a public URL: [docs/DEPLOY.md](docs/DEPLOY.md). Texting your own phone through Twilio from a laptop: [docs/TWILIO-SETUP.md](docs/TWILIO-SETUP.md).
+Deploying and getting a public URL: [infra/README.md](infra/README.md) (one command, AWS CDK) or [docs/DEPLOY.md](docs/DEPLOY.md) (by hand). Texting your own phone through Twilio from a laptop: [docs/TWILIO-SETUP.md](docs/TWILIO-SETUP.md).
 
 ## Run it locally
 

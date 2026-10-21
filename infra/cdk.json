@@ -1,0 +1,9 @@
+{
+  "app": "npx tsx bin/hra.ts",
+  "context": {
+    "domain": "app.ayuhealth.io",
+    "planName": "Your health plan",
+    "nurseLine": "",
+    "@aws-cdk/aws-ecs:enableImdsBlockingDeprecatedFeature": false
+  }
+}

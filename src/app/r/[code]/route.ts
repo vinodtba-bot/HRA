@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CODE_RE } from '@/lib/crypto';
 import { findInvitationByCode } from '@/lib/invitation';
 import { allow } from '@/lib/ratelimit';
+import { linkBase } from '@/lib/config';
 
 // GET never changes state, so link-preview bots cannot use the link up. The code moves into a short-lived
 // HttpOnly cookie and the browser is redirected, so the code leaves the address bar and referrer headers.
@@ -11,7 +12,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
   if (!allow(`r:${ip}`, 20)) return new NextResponse('Too many requests', { status: 429 });
 
   const inv = CODE_RE.test(code) ? await findInvitationByCode(code) : null;
-  const res = NextResponse.redirect(new URL(inv ? '/start' : '/not-found', req.url), 303);
+  // Redirect to the public address, not req.url: behind a tunnel or load balancer req.url is the internal host.
+  const res = NextResponse.redirect(`${linkBase()}${inv ? '/start' : '/not-found'}`, 303);
   if (inv) res.cookies.set('inv', code, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 3600 });
   res.headers.set('Referrer-Policy', 'no-referrer');
   res.headers.set('X-Robots-Tag', 'noindex, nofollow');
