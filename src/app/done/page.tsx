@@ -8,6 +8,8 @@ import { enqueueSend } from '@/lib/jobs';
 import { audit } from '@/lib/audit';
 import { setDisposition } from '@/lib/outreach';
 import { PLAN_NURSE_LINE } from '@/lib/config';
+import { t } from '@/lib/lang';
+import { localizeForm } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,13 +27,19 @@ export default async function DonePage() {
   }
 
   const plan = await prisma.carePlan.findUnique({ where: { assessmentId: assessment.id } });
-  const items = (plan?.items ?? []) as unknown as CarePlanItem[];
+  const { lang, s } = await t();
+  const displayName = localizeForm(form, lang).displayName;
+  // The saved plan records which rules fired; the text is shown in the member's current language.
+  const items = ((plan?.items ?? []) as unknown as CarePlanItem[]).map(i => {
+    const tr = s.carePlan[i.rule];
+    return tr ? { ...i, title: tr.title, detail: tr.detail, action: i.action && { ...i.action, label: tr.action || i.action.label } } : i;
+  });
   return (
     <main>
-      <h1>Thank you. Your {form.displayName} is complete.</h1>
-      <p>Here is what your plan can help with, based on your answers. We also texted you a link to this page.</p>
+      <h1>{s.done.h1(displayName)}</h1>
+      <p>{s.done.intro}</p>
       {items.length === 0 && (
-        <div className="card"><p>Your answers did not show any needs right now. Keep up your regular checkups.</p></div>
+        <div className="card"><p>{s.done.none}</p></div>
       )}
       {items.map(i => (
         <div className="card plan-item" key={i.rule}>
@@ -40,7 +48,7 @@ export default async function DonePage() {
           {i.action && <a className="btn" href={i.action.href}>{i.action.label}</a>}
         </div>
       ))}
-      {PLAN_NURSE_LINE && <p className="muted">Questions? Call our 24/7 nurse line at {PLAN_NURSE_LINE}.</p>}
+      {PLAN_NURSE_LINE && <p className="muted">{s.questionsNurse(PLAN_NURSE_LINE)}</p>}
     </main>
   );
 }

@@ -9,12 +9,12 @@ import { hashCode, hmacField, newCode } from '../../src/lib/crypto';
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const step = (s: string) => console.log(`✓ ${s}`);
 
-async function fixture(tag: string, opts: { state?: string; lob?: string } = {}) {
+async function fixture(tag: string, opts: { state?: string; lob?: string; language?: string } = {}) {
   const campaign = await prisma.campaign.upsert({ where: { id: '00000000-0000-0000-0000-00000000e2e0' }, create: { id: '00000000-0000-0000-0000-00000000e2e0', name: 'E2E' }, update: {} });
   const id = `E2E-${tag}-${Date.now()}`;
   const member = await prisma.member.create({
     data: {
-      planMemberId: id, firstName: 'Testname', phoneE164: '+15125550199', state: opts.state ?? 'TX', lineOfBusiness: opts.lob ?? 'Medicaid', riskTier: 3,
+      planMemberId: id, firstName: 'Testname', phoneE164: '+15125550199', state: opts.state ?? 'TX', lineOfBusiness: opts.lob ?? 'Medicaid', riskTier: 3, language: opts.language ?? 'en',
       dobHmac: hmacField('dob', '1968-04-12'), zipHmac: hmacField('zip', '78701'), medicaidIdHmac: hmacField('medicaid_id', 'TX123456789'),
     },
   });
@@ -181,6 +181,23 @@ async function main() {
   assert.equal(admin.status, 200);
   assert.ok((await admin.text()).includes('HRA outreach funnel'));
   step('admin funnel requires login');
+
+  // 9. A Spanish-speaking member sees Spanish from the start, and can switch to English, which sticks for texts.
+  const sp = await fixture('es', { language: 'es' });
+  const pe = await (await ctx()).newPage();
+  await pe.goto(`${BASE}/r/${sp.code}`);
+  await pe.waitForURL('**/start');
+  assert.equal(await pe.textContent('h1'), 'Su chequeo de salud');
+  assert.equal(await pe.getAttribute('html', 'lang'), 'es');
+  await pe.fill('#medicaid_id', 'tx123456789');
+  await pe.fill('#dob', '1968-04-12');
+  await pe.click('button[type=submit]');
+  await pe.waitForURL('**/q');
+  assert.equal(await pe.textContent('h1'), 'En general, ¿cómo calificaría su salud?');
+  await pe.click('header a.lang');
+  await pe.waitForFunction(() => document.querySelector('h1')?.textContent === 'In general, how would you rate your health?');
+  assert.equal((await prisma.member.findUniqueOrThrow({ where: { id: sp.member.id } })).language, 'en');
+  step('Spanish member sees Spanish; switching to English sticks');
 
   await browser.close();
   console.log('\nAll end-to-end checks passed.');

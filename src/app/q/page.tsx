@@ -4,6 +4,8 @@ import { requireSession } from '@/lib/session';
 import { loadForm } from '@/lib/forms';
 import { isEnabled, nextItem, previousItem, progress, type Answers, type Item } from '@/lib/questionnaire';
 import { answer } from './actions';
+import { t } from '@/lib/lang';
+import { localizeForm, type Strings } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +15,8 @@ export default async function QuestionPage({ searchParams }: { searchParams: Pro
   const { assessment } = await requireSession();
   if (assessment.status !== 'in_progress') redirect('/done');
   const { edit, error } = await searchParams;
-  const form = await loadForm(assessment);
+  const { lang, s } = await t();
+  const form = localizeForm(await loadForm(assessment), lang);
   const rows = await prisma.answer.findMany({ where: { assessmentId: assessment.id } });
   const answers: Answers = Object.fromEntries(rows.map(r => [r.linkId, r.value]));
 
@@ -31,10 +34,10 @@ export default async function QuestionPage({ searchParams }: { searchParams: Pro
     <main>
       <div className="muted">{form.displayName}</div>
       <div className="row muted" style={{ fontSize: 15 }}>
-        <span>Part {sectionNo} of {sections.length}: {item.section}</span>
+        <span>{s.q.part(sectionNo, sections.length, item.section)}</span>
         <span>{pct}%</span>
       </div>
-      <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Progress">
+      <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={s.q.progress}>
         <span style={{ width: `${pct}%` }} />
       </div>
 
@@ -42,29 +45,29 @@ export default async function QuestionPage({ searchParams }: { searchParams: Pro
         <input type="hidden" name="linkId" value={item.linkId} />
         <h1 id="q">{item.text}</h1>
         {item.help && <p className="muted">{item.help}</p>}
-        {error && <p className="error" role="alert">Please choose an answer.</p>}
-        <Control item={item} current={current} />
+        {error && <p className="error" role="alert">{s.q.chooseAnswer}</p>}
+        <Control item={item} current={current} s={s.q} />
         {!item.required && (
-          <button type="submit" name="value" value="" className="secondary" formNoValidate>Skip this question</button>
+          <button type="submit" name="value" value="" className="secondary" formNoValidate>{s.q.skip}</button>
         )}
       </form>
 
       <div className="links">
-        {back && <a href={`/q?edit=${back.linkId}`}>← Back</a>}
-        <span className="muted">Your answers save as you go. You can stop and come back with the same link.</span>
-        <a href="/decline">No thanks, I don&apos;t want to do this</a>
+        {back && <a href={`/q?edit=${back.linkId}`}>{s.q.back}</a>}
+        <span className="muted">{s.q.saves}</span>
+        <a href="/decline">{s.start.noThanks}</a>
       </div>
     </main>
   );
 }
 
-function Control({ item, current }: { item: Item; current: unknown }) {
+function Control({ item, current, s }: { item: Item; current: unknown; s: Strings['q'] }) {
   switch (item.type) {
     case 'boolean':
       return (
         <div role="group" aria-labelledby="q">
-          <button type="submit" name="value" value="true" className="choice" aria-pressed={current === true}>Yes</button>
-          <button type="submit" name="value" value="false" className="choice" aria-pressed={current === false}>No</button>
+          <button type="submit" name="value" value="true" className="choice" aria-pressed={current === true}>{s.yes}</button>
+          <button type="submit" name="value" value="false" className="choice" aria-pressed={current === false}>{s.no}</button>
         </div>
       );
     case 'choice':
@@ -78,24 +81,24 @@ function Control({ item, current }: { item: Item; current: unknown }) {
     case 'integer':
       return (
         <>
-          <label htmlFor="value" className="muted" style={{ fontWeight: 400 }}>Enter a number</label>
+          <label htmlFor="value" className="muted" style={{ fontWeight: 400 }}>{s.enterNumber}</label>
           <input id="value" name="value" type="number" inputMode="numeric" min={item.min} max={item.max}
             required={item.required} defaultValue={typeof current === 'number' ? current : undefined} />
-          <button type="submit">Continue</button>
+          <button type="submit">{s.next}</button>
         </>
       );
     case 'date':
       return (
         <>
           <input aria-labelledby="q" name="value" type="date" required={item.required} defaultValue={typeof current === 'string' ? current : undefined} />
-          <button type="submit">Continue</button>
+          <button type="submit">{s.next}</button>
         </>
       );
     case 'text':
       return (
         <>
           <textarea aria-labelledby="q" name="value" maxLength={500} required={item.required} defaultValue={typeof current === 'string' ? current : undefined} />
-          <button type="submit">Continue</button>
+          <button type="submit">{s.next}</button>
         </>
       );
   }

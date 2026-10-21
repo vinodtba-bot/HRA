@@ -11,6 +11,7 @@ import { allow } from '@/lib/ratelimit';
 import { setDisposition } from '@/lib/outreach';
 import { LOCK_MINUTES, MAX_VERIFY_FAILS } from '@/lib/config';
 import type { IdentityField } from '@/lib/crypto';
+import { t } from '@/lib/lang';
 
 export type VerifyState = { error?: string };
 
@@ -19,10 +20,11 @@ export async function verify(_prev: VerifyState, form: FormData): Promise<Verify
   if (!inv) redirect('/not-found');
   if (isExpired(inv)) redirect('/expired');
   const { ip, userAgent } = await clientInfo();
+  const { s } = await t();
   if (!allow(`verify:ip:${ip}`, 20) || !allow(`verify:inv:${inv.id}`, 10))
-    return { error: 'Too many tries. Please wait a minute and try again.' };
+    return { error: s.verify.tooFast };
   if (inv.lockedUntil && inv.lockedUntil > new Date())
-    return { error: `Too many tries. Please wait ${LOCK_MINUTES} minutes and try again.` };
+    return { error: s.verify.locked(LOCK_MINUTES) };
 
   // The member actually interacted (bots never submit this form).
   if (!inv.firstOpenedAt) {
@@ -42,8 +44,8 @@ export async function verify(_prev: VerifyState, form: FormData): Promise<Verify
     await audit(locked ? 'locked' : 'verify_fail', inv.id, { ip, userAgent, detail: { failed } });
     return {
       error: locked
-        ? `Too many tries. Please wait ${LOCK_MINUTES} minutes and try again.`
-        : "That doesn't match our records. Please check and try again.",
+        ? s.verify.locked(LOCK_MINUTES)
+        : s.verify.noMatch,
     };
   }
 

@@ -1,16 +1,18 @@
 import { notFound } from 'next/navigation';
 import { invitationFromLinkCookie } from '@/lib/invitation';
 import { relink } from './actions';
+import { t } from '@/lib/lang';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ExpiredPage({ searchParams }: { searchParams: Promise<{ sent?: string; limit?: string }> }) {
   const sp = await searchParams;
+  const { s } = await t();
   if (sp.sent) {
     return (
       <main>
-        <h1>New link sent</h1>
-        <p>We texted a new link to the phone number we have on file. Please open it to continue.</p>
+        <h1>{s.expired.sentH1}</h1>
+        <p>{s.expired.sentBody}</p>
       </main>
     );
   }
@@ -18,11 +20,11 @@ export default async function ExpiredPage({ searchParams }: { searchParams: Prom
   if (!inv) notFound();
   return (
     <main>
-      <h1>This link has expired</h1>
-      <p>For your privacy, check-in links only work for a limited time. We can text a new one to the phone number we have on file.</p>
-      {sp.limit && <p className="error" role="alert">We have already sent several new links today. Please try again tomorrow.</p>}
+      <h1>{s.expired.h1}</h1>
+      <p>{s.expired.body}</p>
+      {sp.limit && <p className="error" role="alert">{s.expired.limit}</p>}
       <form action={relink}>
-        <button type="submit">Text me a new link</button>
+        <button type="submit">{s.expired.button}</button>
       </form>
     </main>
   );

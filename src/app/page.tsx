@@ -1,8 +1,11 @@
-export default function Home() {
+import { t } from '@/lib/lang';
+
+export default async function Home() {
+  const { s } = await t();
   return (
     <main>
-      <h1>Health check-in</h1>
-      <p>Please open the link in the text message we sent you to start your check-in.</p>
+      <h1>{s.home.h1}</h1>
+      <p>{s.home.body}</p>
     </main>
   );
 }
