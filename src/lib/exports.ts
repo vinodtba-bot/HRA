@@ -1,14 +1,13 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { prisma } from './db';
 import { log } from './log';
 import { missingRequired, type Answers } from './questionnaire';
 import { loadForm } from './forms';
 import { firstOutreachDeadlineDays, businessDaysBetween } from './schedule';
 import { timezoneFor } from './outreach';
+import { writeExport } from './storage';
 
 // Nightly CSV files for the plan: the MVP stand-in for the HRA file out and the work queues.
-// These contain PHI. In production write them to an encrypted S3 bucket or the plan's SFTP, never to local disk.
+// These contain PHI. In AWS they go to the encrypted data bucket (DATA_BUCKET); locally to ./exports.
 
 const esc = (v: unknown) => {
   const s = v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
@@ -145,13 +144,12 @@ export async function slaOverdue(now = new Date()) {
 
 export const NIGHTLY_EXPORTS: ExportKind[] = ['completed', 'partial_followup', 'referrals', 'callbacks', 'bad_numbers', 'reported_complete', 'declined', 'sla_overdue'];
 
-export async function runNightly(now = new Date(), dir = path.join(process.cwd(), 'exports')) {
+export async function runNightly(now = new Date(), dir?: string) {
   const partials = await markPartials(now);
   const day = now.toISOString().slice(0, 10);
-  const out = path.join(dir, day);
-  fs.mkdirSync(out, { recursive: true, mode: 0o700 });
-  for (const k of NIGHTLY_EXPORTS) fs.writeFileSync(path.join(out, `${k}.csv`), await buildExport(k, now), { mode: 0o600 });
+  const files: string[] = [];
+  for (const k of NIGHTLY_EXPORTS) files.push(await writeExport(day, `${k}.csv`, await buildExport(k, now), dir));
   await prisma.referral.updateMany({ where: { sentAt: null }, data: { sentAt: now } });
-  log.info({ partials, dir: out }, 'nightly exports written');
-  return { partials, dir: out };
+  log.info({ partials, files: files.length, to: files[0]?.replace(/[^/]+$/, '') }, 'nightly exports written');
+  return { partials, files };
 }

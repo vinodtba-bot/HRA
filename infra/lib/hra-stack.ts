@@ -2,6 +2,12 @@ import * as path from 'node:path';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as elbActions from 'aws-cdk-lib/aws-elasticloadbalancingv2-actions';
+import * as kms from 'aws-cdk-lib/aws-kms';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as ecsPatterns from 'aws-cdk-lib/aws-ecs-patterns';
@@ -15,6 +21,10 @@ export interface HraStackProps extends cdk.StackProps {
   domain: string;
   planName: string;
   nurseLine: string;
+  /** Care team address that gets crisis alerts. Empty: alerts are only logged. */
+  alertEmail: string;
+  /** Prefix for the admin sign-in page, <prefix>.auth.<region>.amazoncognito.com. Must be unique in the region. */
+  loginDomainPrefix: string;
 }
 
 // The layout from docs/DEPLOY.md: one image run as two Fargate services (web behind an HTTPS load balancer, and
@@ -57,7 +67,6 @@ export class HraStack extends cdk.Stack {
     const tokenPepper = generated('TokenPepper');
     const dobPepper = generated('DobPepper'); // never rotate once members are imported: identity hashes depend on it
     const sessionSecret = generated('SessionSecret');
-    const adminPassword = generated('AdminPassword', 24);
 
     // Filled in after the first deploy by infra/set-twilio.sh. Until then sends fail loudly ("Twilio is not configured").
     const twilioKeys = ['TWILIO_ACCOUNT_SID', 'TWILIO_API_KEY', 'TWILIO_API_SECRET', 'TWILIO_AUTH_TOKEN', 'TWILIO_MESSAGING_SERVICE_SID'];
@@ -66,15 +75,40 @@ export class HraStack extends cdk.Stack {
       secretObjectValue: Object.fromEntries(twilioKeys.map(k => [k, cdk.SecretValue.unsafePlainText('')])),
     });
 
-    const environment = {
+    // PHI files: nightly exports and uploaded member lists. Encrypted with its own KMS key, never public.
+    const dataKey = new kms.Key(this, 'DataKey', { enableKeyRotation: true, removalPolicy: cdk.RemovalPolicy.RETAIN });
+    const dataBucket = new s3.Bucket(this, 'Data', {
+      encryption: s3.BucketEncryption.KMS,
+      encryptionKey: dataKey,
+      bucketKeyEnabled: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      versioned: true,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      lifecycleRules: [
+        { prefix: 'imports/', expiration: cdk.Duration.days(7), noncurrentVersionExpiration: cdk.Duration.days(1) },
+        { prefix: 'exports/', noncurrentVersionExpiration: cdk.Duration.days(30) },
+      ],
+    });
+
+    // Crisis alerts by email. The message carries no member details, only a pointer to the admin page.
+    const crisisTopic = new sns.Topic(this, 'CrisisAlerts', {
+      displayName: 'HRA crisis alerts',
+      masterKey: kms.Alias.fromAliasName(this, 'SnsKey', 'alias/aws/sns'),
+    });
+    if (props.alertEmail) crisisTopic.addSubscription(new subs.EmailSubscription(props.alertEmail));
+
+    const environment: Record<string, string> = {
       NODE_ENV: 'production',
       PUBLIC_LINK_BASE: `https://${domain}`,
       PLAN_NAME: props.planName,
       PLAN_NURSE_LINE: props.nurseLine,
-      ADMIN_USER: 'admin',
       DB_HOST: db.dbInstanceEndpointAddress,
       DB_PORT: db.dbInstanceEndpointPort,
       DB_NAME: 'hra',
+      DATA_BUCKET: dataBucket.bucketName,
+      CRISIS_ALERT_TOPIC_ARN: crisisTopic.topicArn,
+      ADMIN_AUTH: 'alb',
     };
     const secrets: Record<string, ecs.Secret> = {
       DB_USER: ecs.Secret.fromSecretsManager(db.secret!, 'username'),
@@ -82,7 +116,6 @@ export class HraStack extends cdk.Stack {
       TOKEN_PEPPER: ecs.Secret.fromSecretsManager(tokenPepper),
       DOB_PEPPER: ecs.Secret.fromSecretsManager(dobPepper),
       SESSION_SECRET: ecs.Secret.fromSecretsManager(sessionSecret),
-      ADMIN_PASSWORD: ecs.Secret.fromSecretsManager(adminPassword),
       ...Object.fromEntries(twilioKeys.map(k => [k, ecs.Secret.fromSecretsManager(twilioSecret, k)])),
     };
 
@@ -117,6 +150,40 @@ export class HraStack extends cdk.Stack {
     });
     web.targetGroup.configureHealthCheck({ path: '/api/health', healthyHttpCodes: '200' });
 
+    // Admin sign-in: the load balancer sends /admin through Cognito (no self sign-up, MFA required), and the
+    // app checks the load balancer's signed identity header. Users are added with the command in infra/README.md.
+    const adminPool = new cognito.UserPool(this, 'AdminUsers', {
+      selfSignUpEnabled: false,
+      signInAliases: { email: true },
+      mfa: cognito.Mfa.REQUIRED,
+      mfaSecondFactor: { otp: true, sms: false },
+      passwordPolicy: { minLength: 14, requireSymbols: false },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+    const loginDomain = adminPool.addDomain('Login', { cognitoDomain: { domainPrefix: props.loginDomainPrefix } });
+    const adminClient = adminPool.addClient('Alb', {
+      generateSecret: true,
+      oAuth: {
+        flows: { authorizationCodeGrant: true },
+        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL],
+        callbackUrls: [`https://${domain}/oauth2/idpresponse`],
+      },
+      supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO],
+    });
+    web.listener.addAction('AdminLogin', {
+      priority: 10,
+      conditions: [elbv2.ListenerCondition.pathPatterns(['/admin', '/admin/*'])],
+      action: new elbActions.AuthenticateCognitoAction({
+        userPool: adminPool,
+        userPoolClient: adminClient,
+        userPoolDomain: loginDomain,
+        sessionTimeout: cdk.Duration.hours(8),
+        next: elbv2.ListenerAction.forward([web.targetGroup]),
+      }),
+    });
+    web.taskDefinition.defaultContainer!.addEnvironment('ADMIN_ALB_ARN', web.loadBalancer.loadBalancerArn);
+
     // Exactly one worker. It applies migrations and loads forms on start, so a deploy updates the database too.
     const workerTask = new ecs.FargateTaskDefinition(this, 'WorkerTask', { cpu: 512, memoryLimitMiB: 1024, runtimePlatform });
     workerTask.addContainer('worker', {
@@ -137,6 +204,9 @@ export class HraStack extends cdk.Stack {
       circuitBreaker: { rollback: true },
     });
 
+    dataBucket.grantReadWrite(workerTask.taskRole);
+    crisisTopic.grantPublish(workerTask.taskRole);
+
     db.connections.allowDefaultPortFrom(web.service, 'web tasks');
     db.connections.allowDefaultPortFrom(worker, 'worker task');
 
@@ -148,6 +218,7 @@ export class HraStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ClusterName', { value: cluster.clusterName });
     new cdk.CfnOutput(this, 'WebService', { value: web.service.serviceName });
     new cdk.CfnOutput(this, 'WorkerService', { value: worker.serviceName });
-    new cdk.CfnOutput(this, 'AdminPasswordSecret', { value: adminPassword.secretName });
+    new cdk.CfnOutput(this, 'DataBucket', { value: dataBucket.bucketName });
+    new cdk.CfnOutput(this, 'AdminUserPool', { value: adminPool.userPoolId });
   }
 }

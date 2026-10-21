@@ -1,7 +1,7 @@
 // Imports a member CSV into a new campaign and queues one invite job per member, high risk first.
 // Usage: npm run import -- --file sample/members.csv --campaign "Pilot Oct 2026" [--dry-run]
+// --file also takes s3://bucket/key (infra/import.sh uploads the file to the data bucket and passes that).
 // Prints a summary, never the rows.
-import fs from 'node:fs';
 import { parse } from 'csv-parse/sync';
 import { prisma } from '../src/lib/db';
 import { hmacField } from '../src/lib/crypto';
@@ -12,6 +12,7 @@ import { enqueueSend, boss } from '../src/lib/jobs';
 import { nextAllowedSendTime } from '../src/lib/schedule';
 import { timezoneFor } from '../src/lib/outreach';
 import { audit } from '../src/lib/audit';
+import { readInput } from '../src/lib/storage';
 
 const arg = (name: string) => {
   const i = process.argv.indexOf(`--${name}`);
@@ -34,7 +35,7 @@ async function main() {
   const dry = process.argv.includes('--dry-run');
   if (!file) throw new Error('--file is required');
 
-  const rows = parse(fs.readFileSync(file), { columns: true, skip_empty_lines: true, trim: true }) as Row[];
+  const rows = parse(await readInput(file), { columns: true, skip_empty_lines: true, trim: true }) as Row[];
   const missingCols = REQUIRED.filter(c => !(c in (rows[0] ?? {})));
   if (missingCols.length) throw new Error(`CSV is missing columns: ${missingCols.join(', ')}`);
 

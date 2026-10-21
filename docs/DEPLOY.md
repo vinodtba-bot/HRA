@@ -137,8 +137,9 @@ task definition revision.
 ## 5. Before real members
 
 - BAAs signed with AWS and Twilio; 10DLC or toll-free registration approved.
-- Admin page behind the plan's SSO with MFA instead of the basic-auth stand-in.
-- Nightly exports written to an encrypted S3 bucket or the plan's SFTP, not the container's disk.
+- Admin page login with MFA: done in `infra/` (Cognito). Connecting it to the plan's own SSO is a later option.
+- Nightly exports go to the encrypted S3 bucket (`infra/`); forwarding them to the plan's SFTP is still to do.
+- Crisis alerts email the care team (`alertEmail` in `infra/cdk.json`); confirm the subscription email.
 - CloudWatch log retention set, and an alarm on the `/api/health` target and on worker task restarts.
 - Confirm the plan's texting consent basis (TCPA) and quiet-hours policy.
 - Decide the pilot questionnaire and the plan's high-risk definition (see the README).
